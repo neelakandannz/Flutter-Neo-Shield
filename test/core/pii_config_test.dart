@@ -97,7 +97,7 @@ void main() {
 
     group('enabledTypes filtering', () {
       test('isTypeEnabled returns false for non-enabled types', () {
-        final config = const ShieldConfig(
+        const config = ShieldConfig(
           enabledTypes: {PIIType.email},
         );
         expect(config.isTypeEnabled(PIIType.email), isTrue);
@@ -107,14 +107,14 @@ void main() {
       });
 
       test('allTypesEnabled is false when specific types are set', () {
-        final config = const ShieldConfig(
+        const config = ShieldConfig(
           enabledTypes: {PIIType.email},
         );
         expect(config.allTypesEnabled, isFalse);
       });
 
       test('isTypeEnabled returns true for all explicitly enabled types', () {
-        final config = const ShieldConfig(
+        const config = ShieldConfig(
           enabledTypes: {PIIType.email, PIIType.phone, PIIType.ssn},
         );
         expect(config.isTypeEnabled(PIIType.email), isTrue);

@@ -200,7 +200,7 @@ void main() {
 
     group('Custom replacement', () {
       test('uses custom replacement text for email', () {
-        PIIDetector().configure(ShieldConfig(
+        PIIDetector().configure(const ShieldConfig(
           customReplacements: {PIIType.email: '[REMOVED]'},
         ));
         final result = PIIDetector().sanitize('Email: john@test.com');

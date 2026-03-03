@@ -427,7 +427,7 @@ dio.interceptors.add(DioShieldInterceptor());
 // Now all request/response logs have PII hidden automatically.
 ```
 
-See the [Dio integration file](https://github.com/neelakandan/flutter_neo_shield/blob/main/lib/src/log_shield/dio_shield_interceptor.dart) on GitHub.
+See the [Dio integration file](https://github.com/neelakandanz/flutter-neo-shield/blob/main/lib/src/log_shield/dio_shield_interceptor.dart) on GitHub.
 
 ---
 
