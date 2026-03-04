@@ -34,7 +34,7 @@ class ObfuscateGenerator extends GeneratorForAnnotation<ObfuscateClass> {
     }
 
     // ignore: deprecated_member_use
-    final classElement = element as ClassElement;
+    final classElement = element;
     final className = classElement.name;
     final generatedClassName = '\$$className';
 
