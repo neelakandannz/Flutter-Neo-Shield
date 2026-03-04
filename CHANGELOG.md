@@ -1,4 +1,4 @@
-## 0.4.1
+## 0.4.2
 
 * Fixed missing `dio` dependency which caused issues with `DioShieldInterceptor` during downgrade analysis.
 * Broadened dependency constraints to support the latest stable Dart SDK (`analyzer` and `build`).
