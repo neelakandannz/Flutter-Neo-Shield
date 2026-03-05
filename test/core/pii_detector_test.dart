@@ -108,6 +108,12 @@ void main() {
         expect(result, contains('[HIDDEN]'));
         expect(result, isNot(contains('sk-12345')));
       });
+
+      test('handles missing value safely (e.g., password= at end of string)',
+          () {
+        final result = PIIDetector().sanitize('password=');
+        expect(result, 'password=');
+      });
     });
 
     group('API key detection', () {

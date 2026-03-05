@@ -145,13 +145,18 @@ class SecureString implements SecureDisposable {
     }
     final otherBytes = Uint8List.fromList(utf8.encode(other));
     try {
-      if (_bytes.length != otherBytes.length) return false;
-
       var result = 0;
-      for (var i = 0; i < _bytes.length; i++) {
+      if (_bytes.length != otherBytes.length) {
+        result = 1; // Ensure failure if lengths differ
+      }
+
+      final commonLength =
+          _bytes.length < otherBytes.length ? _bytes.length : otherBytes.length;
+
+      for (var i = 0; i < commonLength; i++) {
         result |= _bytes[i] ^ otherBytes[i];
       }
-      return result == 0;
+      return result == 0 && _bytes.length == otherBytes.length;
     } finally {
       // Wipe the comparison bytes to reduce leakage.
       for (var i = 0; i < otherBytes.length; i++) {

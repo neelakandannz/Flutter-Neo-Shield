@@ -291,11 +291,10 @@ class PIIDetector {
           ).firstMatch(matched);
           if (keyMatch != null) {
             final key = keyMatch.group(0)!;
-            final sepIndex =
-                matched.indexOf(RegExp(r'[=:]'), keyMatch.end);
-            if (sepIndex >= 0) {
-              final separator =
-                  matched.substring(keyMatch.end, sepIndex + 1);
+            final sepIndex = matched.indexOf(RegExp(r'[=:]'), keyMatch.end);
+            if (sepIndex >= 0 && sepIndex < matched.length) {
+              final endIdx = (sepIndex + 1).clamp(0, matched.length);
+              final separator = matched.substring(keyMatch.end, endIdx);
               finalReplacement = '$key$separator[HIDDEN]';
             } else {
               finalReplacement = '$key=[HIDDEN]';

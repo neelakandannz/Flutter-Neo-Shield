@@ -71,6 +71,19 @@ void main() {
       secure.dispose();
     });
 
+    test(
+        'matches() safely handles different length strings without leaking timing',
+        () {
+      final secure1 = SecureString('short');
+      expect(secure1.matches('longer_string'), isFalse);
+
+      final secure2 = SecureString('longer_string');
+      expect(secure2.matches('short'), isFalse);
+
+      secure1.dispose();
+      secure2.dispose();
+    });
+
     test('matches() throws StateError after dispose', () {
       final secure = SecureString('disposed-match');
       secure.dispose();
