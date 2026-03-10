@@ -6,9 +6,12 @@ import 'emulator_detector.dart';
 import 'frida_detector.dart';
 import 'hook_detector.dart';
 import 'integrity_detector.dart';
+import 'native_debug_detector.dart';
+import 'network_threat_detector.dart';
 import 'root_detector.dart';
 import 'security_mode.dart';
 import 'security_result.dart';
+import 'signature_detector.dart';
 
 /// Runtime App Self Protection (RASP) main interface.
 ///
@@ -39,6 +42,36 @@ class RaspShield {
   static Future<SecurityResult> checkDeveloperMode() =>
       DeveloperModeDetector.check();
 
+  /// Checks APK/IPA signing certificate integrity (detects repackaging).
+  ///
+  /// This is the **#1 defense** against desktop-based APK reverse engineering.
+  /// When an attacker decompiles, modifies, and re-signs your APK, the
+  /// signing certificate changes. This check catches that.
+  static Future<SecurityResult> checkSignature() =>
+      SignatureDetector.check();
+
+  /// Checks for native-level debuggers (GDB, LLDB, strace) attached via desktop.
+  ///
+  /// Goes deeper than [checkDebugger] which only checks Java/Swift level.
+  /// This checks /proc/self/status TracerPid (Android), Mach exception
+  /// ports (iOS), and timing anomalies.
+  static Future<SecurityResult> checkNativeDebug() =>
+      NativeDebugDetector.check();
+
+  /// Checks for HTTP proxy or VPN (possible MITM from desktop).
+  ///
+  /// Detects Burp Suite, mitmproxy, Charles Proxy, and VPN tunnels
+  /// commonly used alongside APK reverse engineering.
+  static Future<SecurityResult> checkNetworkThreats() =>
+      NetworkThreatDetector.check();
+
+  /// Returns the current app's signing certificate SHA-256 hash.
+  ///
+  /// Call this during development to obtain your hash. Then use it
+  /// for runtime verification. Returns null on unsupported platforms.
+  static Future<String?> getSignatureHash() =>
+      SignatureDetector.getSignatureHash();
+
   /// Perform a full security scan returning all results.
   ///
   /// All checks run in parallel to minimise the TOCTOU window
@@ -60,6 +93,9 @@ class RaspShield {
       checkHooks(),
       checkIntegrity(),
       checkDeveloperMode(),
+      checkSignature(),
+      checkNativeDebug(),
+      checkNetworkThreats(),
     ]);
 
     final report = SecurityReport(
@@ -70,6 +106,9 @@ class RaspShield {
       hookDetected: results[4].isDetected,
       integrityTampered: results[5].isDetected,
       developerModeDetected: results[6].isDetected,
+      signatureTampered: results[7].isDetected,
+      nativeDebugDetected: results[8].isDetected,
+      networkThreatDetected: results[9].isDetected,
     );
 
     if (!report.isSafe) {

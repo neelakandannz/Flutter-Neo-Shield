@@ -99,6 +99,20 @@ public class FlutterNeoShieldPlugin: NSObject, FlutterPlugin {
         case "checkDeveloperMode":
             result(DeveloperModeDetector.check())
 
+        case "checkSignature":
+            result(SignatureDetectorP0.check())
+
+        case "getSignatureHash":
+            // iOS doesn't expose signing certificate hash the same way Android does.
+            // Return nil — the developer should use Android for hash retrieval.
+            result(nil)
+
+        case "checkNativeDebug":
+            result(NativeDebugDetector.check())
+
+        case "checkNetworkThreats":
+            result(NetworkThreatDetector.checkSimple())
+
         // Screen Shield
         case "enableScreenProtection":
             let window = UIApplication.shared.windows.first { $0.isKeyWindow }

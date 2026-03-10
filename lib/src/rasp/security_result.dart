@@ -33,6 +33,9 @@ class SecurityReport {
     required this.hookDetected,
     required this.integrityTampered,
     this.developerModeDetected = false,
+    this.signatureTampered = false,
+    this.nativeDebugDetected = false,
+    this.networkThreatDetected = false,
   });
 
   /// True if a debugger is attached
@@ -56,6 +59,15 @@ class SecurityReport {
   /// True if Developer Options (Android) or Developer Mode (iOS 16+) is enabled
   final bool developerModeDetected;
 
+  /// True if APK/IPA signing certificate anomalies detected (repackaging)
+  final bool signatureTampered;
+
+  /// True if a native debugger (GDB/LLDB/strace) is attached via ptrace
+  final bool nativeDebugDetected;
+
+  /// True if an HTTP proxy or VPN is active (possible MITM from desktop)
+  final bool networkThreatDetected;
+
   /// Represents the complete safety state. Returns true if NO threats are detected.
   bool get isSafe =>
       !debuggerDetected &&
@@ -64,10 +76,13 @@ class SecurityReport {
       !fridaDetected &&
       !hookDetected &&
       !integrityTampered &&
-      !developerModeDetected;
+      !developerModeDetected &&
+      !signatureTampered &&
+      !nativeDebugDetected &&
+      !networkThreatDetected;
 
   @override
   String toString() {
-    return 'SecurityReport(safe: $isSafe, debugger: $debuggerDetected, root: $rootDetected, emulator: $emulatorDetected, frida: $fridaDetected, hooks: $hookDetected, integrity: $integrityTampered, developerMode: $developerModeDetected)';
+    return 'SecurityReport(safe: $isSafe, debugger: $debuggerDetected, root: $rootDetected, emulator: $emulatorDetected, frida: $fridaDetected, hooks: $hookDetected, integrity: $integrityTampered, developerMode: $developerModeDetected, signature: $signatureTampered, nativeDebug: $nativeDebugDetected, networkThreat: $networkThreatDetected)';
   }
 }

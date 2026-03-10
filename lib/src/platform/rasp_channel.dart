@@ -52,6 +52,23 @@ class RaspChannel {
     }
   }
 
+  /// Invoke a native method that returns a String (or null).
+  ///
+  /// Used for methods like getSignatureHash that return data
+  /// rather than a boolean detection result.
+  static Future<String?> invokeStringMethod(String method,
+      [Map<String, dynamic>? arguments]) async {
+    try {
+      final result =
+          await _channel.invokeMethod<String>(method, arguments);
+      return result;
+    } on MissingPluginException {
+      return null;
+    } on PlatformException {
+      return null;
+    }
+  }
+
   /// Resets configuration state. Only for testing.
   static void resetForTesting() {
     _failClosed = true;

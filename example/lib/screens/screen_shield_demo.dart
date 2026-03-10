@@ -57,8 +57,7 @@ class _ScreenShieldDemoState extends State<ScreenShieldDemo> {
     // On Android, screenshots are silently blocked — no event fires.
     _screenshotSub = _shield.onScreenshotDetected.listen((event) {
       setState(() {
-        _events.insert(
-            0, 'Screenshot detected at ${_formatTime(event.timestamp)}');
+        _events.insert(0, 'Screenshot detected at ${_formatTime(event.timestamp)}');
       });
     });
 
@@ -69,8 +68,7 @@ class _ScreenShieldDemoState extends State<ScreenShieldDemo> {
       setState(() {
         _isRecording = event.isRecording;
         final action = event.isRecording ? 'started' : 'stopped';
-        _events.insert(
-            0, 'Recording $action at ${_formatTime(event.timestamp)}');
+        _events.insert(0, 'Recording $action at ${_formatTime(event.timestamp)}');
       });
     });
   }

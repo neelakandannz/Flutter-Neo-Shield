@@ -133,6 +133,33 @@ class FlutterNeoShieldPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
                     result.success(true)
                 }
             }
+            "checkSignature" -> {
+                val context = applicationContext
+                if (context != null) {
+                    result.success(com.neelakandan.flutter_neo_shield.rasp.SignatureDetector().checkSimple(context))
+                } else {
+                    result.success(true)
+                }
+            }
+            "getSignatureHash" -> {
+                val context = applicationContext
+                if (context != null) {
+                    result.success(com.neelakandan.flutter_neo_shield.rasp.SignatureDetector().getCurrentSignatureHash(context))
+                } else {
+                    result.success(null)
+                }
+            }
+            "checkNativeDebug" -> {
+                result.success(com.neelakandan.flutter_neo_shield.rasp.NativeDebugDetector().check())
+            }
+            "checkNetworkThreats" -> {
+                val context = applicationContext
+                if (context != null) {
+                    result.success(com.neelakandan.flutter_neo_shield.rasp.NetworkThreatDetector().checkSimple(context))
+                } else {
+                    result.success(true)
+                }
+            }
 
             // Screen Shield
             "enableScreenProtection" -> {

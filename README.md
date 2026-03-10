@@ -29,7 +29,7 @@ If any of this data leaks (through logs, clipboard, or memory), it's a security 
 | **Clipboard Shield** | When users copy sensitive text, it auto-deletes from clipboard after X seconds |
 | **Memory Shield** | Stores secrets as bytes and overwrites them with zeros when you're done |
 | **String Shield** | Encrypts string literals at compile time so they can't be extracted from your binary with `strings` |
-| **RASP Shield** | Detects Root, Jailbreak, Debugger, Emulator, Frida, Developer Mode, and Tampering at runtime to block attackers |
+| **RASP Shield** | Detects Root, Jailbreak, Debugger, Native Debugger, Emulator, Frida, Developer Mode, Tampering, Signature Repackaging, and Proxy/VPN (MITM) at runtime to block attackers |
 | **Screen Shield** | Blocks screenshots, screen recording, and app-switcher thumbnails from capturing sensitive screens |
 
 ---
@@ -275,6 +275,9 @@ if (!report.isSafe) {
   if (report.hookDetected) print('Hooking framework (Substrate/Xposed) detected!');
   if (report.integrityTampered) print('App binary was tampered/sideloaded!');
   if (report.developerModeDetected) print('Developer Options / Developer Mode is enabled!');
+  if (report.signatureTampered) print('APK/IPA re-signed with different certificate!');
+  if (report.nativeDebugDetected) print('Native debugger (GDB/LLDB) attached from desktop!');
+  if (report.networkThreatDetected) print('Proxy or VPN detected — possible MITM attack!');
 }
     // Exit the app
     _terminateApp();
@@ -288,6 +291,51 @@ if ((await RaspShield.checkFrida()).isDetected) {
   throw Exception("Payment blocked: Security risk.");
 }
 ```
+
+#### Anti-Repackaging (Signature Verification)
+
+The **#1 attack** on APKs: decompile with `apktool`/`jadx`, modify code, re-sign with a different key. Signature verification catches this:
+
+```dart
+// Check if someone re-signed your APK/IPA
+if ((await RaspShield.checkSignature()).isDetected) {
+  // APK was repackaged — kill the app or restrict features
+}
+
+// Get your signing certificate hash during development:
+final hash = await RaspShield.getSignatureHash();
+print('My signing cert SHA-256: $hash');
+// Use this hash for strict verification in production
+```
+
+**What it detects (Android):** Debug certificates, multiple signers, certificate hash mismatch.
+**What it detects (iOS):** Missing/corrupt CodeResources, `get-task-allow` entitlement, `DYLD_INSERT_LIBRARIES` injection.
+
+#### Native Debugger Detection
+
+Goes deeper than `checkDebugger()` — catches **GDB, LLDB, strace** attached from a desktop via USB/ADB:
+
+```dart
+if ((await RaspShield.checkNativeDebug()).isDetected) {
+  // Native debugger attached from desktop!
+}
+```
+
+**Android:** `/proc/self/status` TracerPid, `/proc/self/wchan` ptrace_stop, timing anomaly.
+**iOS:** Mach exception port enumeration, timing anomaly, `PT_DENY_ATTACH` support.
+
+#### Proxy & VPN Detection (Anti-MITM)
+
+Detects Burp Suite, mitmproxy, Charles Proxy, and VPN tunnels — the tools attackers use to intercept your HTTPS traffic from their desktop:
+
+```dart
+if ((await RaspShield.checkNetworkThreats()).isDetected) {
+  // Proxy or VPN active — possible MITM interception
+}
+```
+
+**Android:** System proxy properties, ConnectivityManager, global proxy settings, VPN transport, tun/ppp interfaces.
+**iOS:** CFNetwork proxy settings (HTTP/HTTPS/SOCKS), utun/ppp/ipsec network interfaces.
 
 ---
 
@@ -402,7 +450,7 @@ FlutterNeoShield.screen.onRecordingStateChanged.listen((event) {
 
 ```yaml
 dependencies:
-  flutter_neo_shield: ^0.7.0
+  flutter_neo_shield: ^0.8.0
 ```
 
 **Step 2:** Run:

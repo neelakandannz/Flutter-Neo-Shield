@@ -1,3 +1,68 @@
+## 0.8.0
+
+### P0 Anti-Reverse-Engineering: Signature, Native Debug, and Network Threat Detection
+
+Three new native-level RASP detectors targeting the most critical desktop-based APK/IPA reverse engineering attacks.
+
+#### New: APK/IPA Signature Verification (`SignatureDetector`)
+
+* **Android:** Reads the APK signing certificate at runtime and checks for:
+  * Debug certificate (`CN=Android Debug`) — re-signed with default debug keystore.
+  * Multiple signers — anomaly for production apps.
+  * Optional SHA-256 hash comparison against a known-good certificate.
+  * Optional `classes.dex` hash verification to detect bytecode patching.
+* **iOS:** Verifies code signature integrity via:
+  * `_CodeSignature/CodeResources` existence and parse check.
+  * `get-task-allow` entitlement detection (should be false in production).
+  * `DYLD_INSERT_LIBRARIES` / `DYLD_LIBRARY_PATH` environment variable detection.
+* **New Dart class:** `SignatureDetector` in `lib/src/rasp/signature_detector.dart`.
+* **New native classes:** `SignatureDetector.kt` (Android), `SignatureDetector_P0.swift` (iOS).
+* **Helper:** `RaspShield.getSignatureHash()` returns the current signing certificate SHA-256 hash for embedding in your app.
+
+#### New: Native Debugger Detection (`NativeDebugDetector`)
+
+* **Android:** Catches GDB, LLDB, and strace attached from desktop via ADB:
+  * `/proc/self/status` TracerPid check — non-zero means ptrace-attached.
+  * `/proc/self/wchan` check — detects `ptrace_stop` wait state.
+  * Timing anomaly detection — single-stepping causes measurable delays.
+* **iOS:** Deeper than the existing P_TRACED sysctl check:
+  * Mach exception port enumeration — debuggers register exception ports.
+  * Timing anomaly detection — same as Android.
+  * `PT_DENY_ATTACH` support via `NativeDebugDetector.denyDebuggerAttachment()`.
+* **New Dart class:** `NativeDebugDetector` in `lib/src/rasp/native_debug_detector.dart`.
+* **New native classes:** `NativeDebugDetector.kt` (Android), `NativeDebugDetector.swift` (iOS).
+
+#### New: Proxy & VPN Detection (`NetworkThreatDetector`)
+
+* **Android:** Detects MITM setups used during APK reverse engineering:
+  * `System.getProperty("http.proxyHost")` and `https.proxyHost`.
+  * `ConnectivityManager.getLinkProperties().httpProxy` (API 23+).
+  * `Settings.Global.HTTP_PROXY` global setting.
+  * `NetworkCapabilities.TRANSPORT_VPN` active transport check.
+  * Network interface enumeration for `tun0`, `ppp0`, `tap0`, `ipsec` prefixes.
+* **iOS:** Detects proxy and VPN via:
+  * `CFNetworkCopySystemProxySettings` — HTTP, HTTPS, and SOCKS proxy.
+  * Network interface enumeration for `utun`, `ppp`, `ipsec`, `tap`, `tun` prefixes.
+* **New Dart class:** `NetworkThreatDetector` in `lib/src/rasp/network_threat_detector.dart`.
+* **New native classes:** `NetworkThreatDetector.kt` (Android), `NetworkThreatDetector.swift` (iOS).
+
+#### SecurityReport Updated
+
+* Three new fields: `signatureTampered`, `nativeDebugDetected`, `networkThreatDetected` (all default `false`).
+* Zero breaking changes — existing callers are unaffected.
+* `isSafe` now includes all 10 checks.
+* `fullSecurityScan()` now runs all 10 checks in parallel.
+
+#### RaspChannel Updated
+
+* New `invokeStringMethod()` for methods returning String data (e.g., `getSignatureHash`).
+
+#### Example App Updated
+
+* RASP Shield demo now displays all 10 detection results including the 3 new checks.
+
+---
+
 ## 0.7.0
 
 ### New RASP Check: Developer Mode Detection

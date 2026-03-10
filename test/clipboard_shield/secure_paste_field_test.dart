@@ -56,8 +56,7 @@ void main() {
       expect(find.byType(TextField), findsOneWidget);
     });
 
-    testWidgets('renders TextFormField when validator provided',
-        (tester) async {
+    testWidgets('renders TextFormField when validator provided', (tester) async {
       await tester.pumpWidget(buildTestWidget(
         validator: (v) => null,
       ));
@@ -121,8 +120,7 @@ void main() {
       expect(find.text('initial'), findsOneWidget);
     });
 
-    testWidgets('disposes internal controller when no external',
-        (tester) async {
+    testWidgets('disposes internal controller when no external', (tester) async {
       // Just ensure no error when widget is disposed.
       await tester.pumpWidget(buildTestWidget());
       await tester.pumpWidget(const SizedBox());
