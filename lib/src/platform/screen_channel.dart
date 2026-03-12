@@ -14,10 +14,26 @@ class ScreenChannel {
       EventChannel('com.neelakandan.flutter_neo_shield/screen_events');
 
   static Stream<dynamic>? _eventStream;
+  static bool _streamErrored = false;
 
   /// Lazily initializes and returns the broadcast event stream.
+  ///
+  /// If the previous stream ended due to an error, a new stream is
+  /// created on the next access so that event detection can recover.
   static Stream<dynamic> get _events {
-    _eventStream ??= _eventChannel.receiveBroadcastStream();
+    if (_eventStream == null || _streamErrored) {
+      _streamErrored = false;
+      _eventStream = _eventChannel.receiveBroadcastStream().handleError(
+        (Object error) {
+          _streamErrored = true;
+          developer.log(
+            'Screen event stream error: $error — '
+            'stream will be re-created on next access',
+            name: 'ScreenChannel',
+          );
+        },
+      );
+    }
     return _eventStream!;
   }
 
@@ -150,5 +166,6 @@ class ScreenChannel {
   /// Resets the event stream. Only for testing.
   static void resetForTesting() {
     _eventStream = null;
+    _streamErrored = false;
   }
 }

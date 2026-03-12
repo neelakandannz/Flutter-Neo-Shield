@@ -23,17 +23,17 @@ class FridaDetector {
             val pid = android.os.Process.myPid()
             val file = File("/proc/$pid/maps")
             if (file.exists()) {
-                val scanner = Scanner(file)
-                while (scanner.hasNextLine()) {
-                    val line = scanner.nextLine()
-                    if (line.contains("frida-agent") ||
-                        line.contains("frida-gadget") ||
-                        line.contains("frida-server") ||
-                        line.contains("linjector")) {
-                        return true
+                Scanner(file).use { scanner ->
+                    while (scanner.hasNextLine()) {
+                        val line = scanner.nextLine()
+                        if (line.contains("frida-agent") ||
+                            line.contains("frida-gadget") ||
+                            line.contains("frida-server") ||
+                            line.contains("linjector")) {
+                            return true
+                        }
                     }
                 }
-                scanner.close()
             }
         } catch (e: Exception) {
             // Ignore unable to read /proc/...

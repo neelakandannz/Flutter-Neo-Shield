@@ -67,8 +67,8 @@ public class FlutterNeoShieldPlugin: NSObject, FlutterPlugin {
 
         case "wipeSecure":
             let id = args?["id"] as? String
-            if let id = id, var data = secureStorage[id] {
-                data.resetBytes(in: 0..<data.count)
+            if let id = id, let count = secureStorage[id]?.count, count > 0 {
+                secureStorage[id]?.resetBytes(in: 0..<count)
                 secureStorage.removeValue(forKey: id)
             }
             result(nil)
@@ -115,9 +115,7 @@ public class FlutterNeoShieldPlugin: NSObject, FlutterPlugin {
 
         // Screen Shield
         case "enableScreenProtection":
-            let window = UIApplication.shared.windows.first { $0.isKeyWindow }
-                ?? UIApplication.shared.windows.first
-            result(screenProtector.enable(in: window))
+            result(screenProtector.enable(in: getKeyWindow()))
 
         case "disableScreenProtection":
             result(screenProtector.disable())
@@ -126,9 +124,7 @@ public class FlutterNeoShieldPlugin: NSObject, FlutterPlugin {
             result(screenProtector.isActive)
 
         case "enableAppSwitcherGuard":
-            let window = UIApplication.shared.windows.first { $0.isKeyWindow }
-                ?? UIApplication.shared.windows.first
-            appSwitcherGuard.enable(in: window)
+            appSwitcherGuard.enable(in: getKeyWindow())
             result(true)
 
         case "disableAppSwitcherGuard":
@@ -143,10 +139,24 @@ public class FlutterNeoShieldPlugin: NSObject, FlutterPlugin {
         }
     }
 
+    /// Returns the key window, using the modern UIWindowScene API on iOS 15+
+    /// and falling back to the deprecated UIApplication.shared.windows otherwise.
+    private func getKeyWindow() -> UIWindow? {
+        if #available(iOS 15.0, *) {
+            return UIApplication.shared.connectedScenes
+                .compactMap { $0 as? UIWindowScene }
+                .flatMap { $0.windows }
+                .first { $0.isKeyWindow }
+        } else {
+            return UIApplication.shared.windows.first { $0.isKeyWindow }
+                ?? UIApplication.shared.windows.first
+        }
+    }
+
     private func wipeAll() {
         for key in secureStorage.keys {
-            if var data = secureStorage[key] {
-                data.resetBytes(in: 0..<data.count)
+            if let count = secureStorage[key]?.count, count > 0 {
+                secureStorage[key]?.resetBytes(in: 0..<count)
             }
         }
         secureStorage.removeAll()

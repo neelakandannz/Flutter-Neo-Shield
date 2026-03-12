@@ -5,9 +5,15 @@ import UIKit
 /// When enabled, the app's content is rendered through a layer associated with a
 /// `UITextField` whose `isSecureTextEntry` is `true`. The OS treats this content
 /// as DRM-protected and replaces it with a blank area during capture.
+///
+/// The technique works by finding the internal secure layer that iOS creates
+/// inside a secure text field, then reparenting the window's root view layer
+/// into that secure container. This causes iOS to blank the content during
+/// screenshots and screen recordings.
 class ScreenProtector {
     private var secureField: UITextField?
     private var isEnabled = false
+    private weak var protectedWindow: UIWindow?
 
     /// Enable screen protection on the given window.
     func enable(in window: UIWindow?) -> Bool {
@@ -37,42 +43,59 @@ class ScreenProtector {
     }
 
     private func setupSecureField(in window: UIWindow) {
+        // Clean up any existing secure field first.
+        teardownSecureField()
+
         let field = UITextField()
         field.isSecureTextEntry = true
         field.isUserInteractionEnabled = false
+        field.translatesAutoresizingMaskIntoConstraints = false
 
-        // Add field to the window hierarchy
+        // Add field to the window hierarchy.
         window.addSubview(field)
-        field.centerYAnchor.constraint(equalTo: window.centerYAnchor).isActive = true
-        field.centerXAnchor.constraint(equalTo: window.centerXAnchor).isActive = true
 
-        // Move window's layer content into the secure field's layer.
-        // The OS will blank this layer during screenshots/recordings.
-        if let secureLayer = field.layer.sublayers?.first {
-            secureLayer.addSublayer(window.layer)
+        // Pin to zero size — we only need its internal secure layer.
+        NSLayoutConstraint.activate([
+            field.centerYAnchor.constraint(equalTo: window.centerYAnchor),
+            field.centerXAnchor.constraint(equalTo: window.centerXAnchor),
+            field.widthAnchor.constraint(equalToConstant: 0),
+            field.heightAnchor.constraint(equalToConstant: 0),
+        ])
+
+        // The secure text field creates an internal layer that iOS blanks
+        // during capture. Reparent the root view's layer into that secure
+        // container so all app content inherits the protection.
+        guard let rootView = window.rootViewController?.view else {
+            field.removeFromSuperview()
+            return
         }
 
-        field.layer.sublayers?.forEach { sublayer in
-            sublayer.addSublayer(window.layer)
+        if let secureLayer = field.layer.sublayers?.first {
+            secureLayer.addSublayer(rootView.layer)
         }
 
         secureField = field
+        protectedWindow = window
     }
 
     private func teardownSecureField() {
         guard let field = secureField else { return }
 
-        // Restore the window layer to its original parent
-        if let window = field.superview as? UIWindow {
-            window.layer.removeFromSuperlayer()
-            // Re-add the window's root view to trigger layout
-            if let rootView = window.rootViewController?.view {
+        // Restore the root view's layer back to the window's layer.
+        if let window = protectedWindow ?? field.superview as? UIWindow,
+           let rootView = window.rootViewController?.view {
+            // Only restore if the root view's layer was reparented.
+            if rootView.layer.superlayer !== window.layer {
+                window.layer.addSublayer(rootView.layer)
+                rootView.frame = window.bounds
                 rootView.setNeedsLayout()
+                rootView.layoutIfNeeded()
             }
         }
 
         field.isSecureTextEntry = false
         field.removeFromSuperview()
         secureField = nil
+        protectedWindow = nil
     }
 }

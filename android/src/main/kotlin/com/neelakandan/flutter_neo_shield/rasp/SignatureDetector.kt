@@ -150,29 +150,27 @@ class SignatureDetector {
     private fun checkDexIntegrity(context: Context, expectedHashes: List<String>): Boolean {
         try {
             val apkPath = context.applicationInfo.sourceDir
-            val zipFile = ZipFile(apkPath)
+            ZipFile(apkPath).use { zipFile ->
+                // Check each DEX file
+                for (i in expectedHashes.indices) {
+                    val dexName = if (i == 0) "classes.dex" else "classes${i + 1}.dex"
+                    val entry = zipFile.getEntry(dexName) ?: return true // Missing DEX
 
-            // Check each DEX file
-            for (i in expectedHashes.indices) {
-                val dexName = if (i == 0) "classes.dex" else "classes${i + 1}.dex"
-                val entry = zipFile.getEntry(dexName) ?: return true // Missing DEX
+                    zipFile.getInputStream(entry).use { inputStream ->
+                        val md = MessageDigest.getInstance("SHA-256")
+                        val buffer = ByteArray(8192)
+                        var bytesRead: Int
+                        while (inputStream.read(buffer).also { bytesRead = it } != -1) {
+                            md.update(buffer, 0, bytesRead)
+                        }
 
-                val inputStream = zipFile.getInputStream(entry)
-                val md = MessageDigest.getInstance("SHA-256")
-                val buffer = ByteArray(8192)
-                var bytesRead: Int
-                while (inputStream.read(buffer).also { bytesRead = it } != -1) {
-                    md.update(buffer, 0, bytesRead)
-                }
-                inputStream.close()
-
-                val currentHash = md.digest().joinToString("") { "%02x".format(it) }
-                if (!currentHash.equals(expectedHashes[i], ignoreCase = true)) {
-                    return true // DEX hash mismatch
+                        val currentHash = md.digest().joinToString("") { "%02x".format(it) }
+                        if (!currentHash.equals(expectedHashes[i], ignoreCase = true)) {
+                            return true // DEX hash mismatch
+                        }
+                    }
                 }
             }
-
-            zipFile.close()
         } catch (e: Exception) {
             return true // fail closed
         }

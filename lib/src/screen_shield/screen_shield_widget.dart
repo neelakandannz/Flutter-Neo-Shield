@@ -59,6 +59,11 @@ class _ScreenShieldScopeState extends State<ScreenShieldScope> {
   StreamSubscription<ScreenshotEvent>? _screenshotSub;
   StreamSubscription<RecordingStateEvent>? _recordingSub;
 
+  /// Monotonically increasing counter to detect stale async operations.
+  /// When a newer [_applyProtection] call starts, it increments the epoch
+  /// so that the previous in-flight call can detect it has been superseded.
+  int _protectionEpoch = 0;
+
   @override
   void initState() {
     super.initState();
@@ -80,11 +85,16 @@ class _ScreenShieldScopeState extends State<ScreenShieldScope> {
   }
 
   Future<void> _applyProtection() async {
+    final epoch = ++_protectionEpoch;
+
     if (widget.enableProtection) {
       await _shield.enableProtection();
     } else {
       await _shield.disableProtection();
     }
+
+    // A newer call has superseded this one — stop here.
+    if (epoch != _protectionEpoch) return;
 
     if (widget.guardAppSwitcher) {
       await _shield.enableAppSwitcherGuard();

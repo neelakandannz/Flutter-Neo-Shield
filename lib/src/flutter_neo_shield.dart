@@ -1,6 +1,8 @@
 /// Main entry point for flutter_neo_shield.
 library;
 
+import 'dart:async';
+
 import 'clipboard_shield/clipboard_shield.dart';
 import 'clipboard_shield/clipboard_shield_config.dart';
 import 'core/pii_detector.dart';
@@ -63,6 +65,10 @@ class FlutterNeoShield {
   ///
   /// Can be called with no arguments for sensible defaults.
   ///
+  /// **Note:** When [screenConfig] is provided, screen protection is
+  /// initialized asynchronously. Use [initAsync] if you need to ensure
+  /// screen protection is active before proceeding.
+  ///
   /// ```dart
   /// FlutterNeoShield.init(
   ///   config: ShieldConfig(enableReporting: true),
@@ -101,7 +107,56 @@ class FlutterNeoShield {
     }
 
     if (screenConfig != null) {
-      ScreenShield().init(screenConfig);
+      unawaited(ScreenShield().init(screenConfig));
+    }
+
+    _initialized = true;
+  }
+
+  /// Async variant of [init] that awaits screen protection setup.
+  ///
+  /// Use this in your `main()` when you need to guarantee screen
+  /// protection is active before the first frame.
+  ///
+  /// ```dart
+  /// Future<void> main() async {
+  ///   WidgetsFlutterBinding.ensureInitialized();
+  ///   await FlutterNeoShield.initAsync(
+  ///     screenConfig: ScreenShieldConfig(blockScreenshots: true),
+  ///   );
+  ///   runApp(MyApp());
+  /// }
+  /// ```
+  static Future<void> initAsync({
+    ShieldConfig? config,
+    LogShieldConfig? logConfig,
+    ClipboardShieldConfig? clipboardConfig,
+    MemoryShieldConfig? memoryConfig,
+    StringShieldConfig? stringShieldConfig,
+    ScreenShieldConfig? screenConfig,
+  }) async {
+    final shieldConfig = config ?? const ShieldConfig();
+
+    PIIDetector().configure(shieldConfig);
+
+    if (logConfig != null) {
+      LogShield().init(logConfig);
+    }
+
+    if (clipboardConfig != null) {
+      ClipboardShield().init(clipboardConfig);
+    }
+
+    if (memoryConfig != null) {
+      MemoryShield().init(memoryConfig);
+    }
+
+    if (stringShieldConfig != null) {
+      StringShield().init(stringShieldConfig);
+    }
+
+    if (screenConfig != null) {
+      await ScreenShield().init(screenConfig);
     }
 
     _initialized = true;

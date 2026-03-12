@@ -29,7 +29,18 @@ void main() {
 
     test('configure can only be called once', () {
       RaspChannel.configure(failClosed: false);
-      RaspChannel.configure(failClosed: true); // ignored
+      // Calling again with the same value is a no-op.
+      RaspChannel.configure(failClosed: false);
+      expect(RaspChannel.failClosed, isFalse);
+    });
+
+    test('configure throws in debug mode when called with different value', () {
+      RaspChannel.configure(failClosed: false);
+      expect(
+        () => RaspChannel.configure(failClosed: true),
+        throwsA(isA<StateError>()),
+      );
+      // Original value is preserved.
       expect(RaspChannel.failClosed, isFalse);
     });
 

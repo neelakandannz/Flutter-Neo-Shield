@@ -150,11 +150,15 @@ class SecureString implements SecureDisposable {
         result = 1; // Ensure failure if lengths differ
       }
 
-      final commonLength =
-          _bytes.length < otherBytes.length ? _bytes.length : otherBytes.length;
+      // Always iterate over the longer length so the loop duration does
+      // not reveal the length of either input (constant-time).
+      final maxLength =
+          _bytes.length > otherBytes.length ? _bytes.length : otherBytes.length;
 
-      for (var i = 0; i < commonLength; i++) {
-        result |= _bytes[i] ^ otherBytes[i];
+      for (var i = 0; i < maxLength; i++) {
+        final a = i < _bytes.length ? _bytes[i] : 0;
+        final b = i < otherBytes.length ? otherBytes[i] : 0;
+        result |= a ^ b;
       }
       return result == 0 && _bytes.length == otherBytes.length;
     } finally {

@@ -110,15 +110,9 @@ class _SecurePasteFieldState extends State<SecurePasteField> {
     // while still catching most paste operations.
     final lengthDiff = newText.length - _previousText.length;
     if (lengthDiff >= 5) {
-      // Determine the inserted segment.
-      // If the old text is a prefix, the paste is at the end.
-      // Otherwise, find the divergence point.
-      String pastedText;
-      if (newText.startsWith(_previousText)) {
-        pastedText = newText.substring(_previousText.length);
-      } else {
-        pastedText = newText;
-      }
+      // Determine the inserted segment by finding the common prefix
+      // and suffix between the old and new text.
+      final pastedText = _extractPastedSegment(_previousText, newText);
 
       if (widget.clearAfterPaste) {
         unawaited(ClipboardShield().clearNow());
@@ -129,6 +123,39 @@ class _SecurePasteFieldState extends State<SecurePasteField> {
 
     _previousText = newText;
     widget.onChanged?.call(newText);
+  }
+
+  /// Extracts the pasted segment by comparing the old and new text.
+  ///
+  /// Finds the common prefix and suffix to isolate the inserted portion,
+  /// handling pastes at the beginning, middle, or end of the text.
+  String _extractPastedSegment(String oldText, String newText) {
+    // Find common prefix length.
+    var prefixLen = 0;
+    final minLen = oldText.length < newText.length
+        ? oldText.length
+        : newText.length;
+    while (prefixLen < minLen && oldText[prefixLen] == newText[prefixLen]) {
+      prefixLen++;
+    }
+
+    // Find common suffix length (not overlapping with prefix).
+    var suffixLen = 0;
+    while (suffixLen < (minLen - prefixLen) &&
+        oldText[oldText.length - 1 - suffixLen] ==
+            newText[newText.length - 1 - suffixLen]) {
+      suffixLen++;
+    }
+
+    // The pasted segment is the portion of newText between the
+    // common prefix and common suffix.
+    final pastedEnd = newText.length - suffixLen;
+    if (prefixLen < pastedEnd) {
+      return newText.substring(prefixLen, pastedEnd);
+    }
+
+    // Fallback: return the full new text if we can't isolate the diff.
+    return newText;
   }
 
   @override

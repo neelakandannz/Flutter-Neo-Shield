@@ -328,10 +328,6 @@ class PIIDetector {
             replacement: finalReplacement,
           ),
         ));
-
-        if (_config.enableReporting) {
-          _report?.recordDetection(pattern.type);
-        }
       }
     }
 
@@ -365,10 +361,6 @@ class PIIDetector {
                 replacement: replacement,
               ),
             ));
-
-            if (_config.enableReporting) {
-              _report?.recordDetection(PIIType.name);
-            }
           }
         }
       }
@@ -392,6 +384,14 @@ class PIIDetector {
 
     // Sort final results by position for correct replacement order.
     deduped.sort((a, b) => a.start.compareTo(b.start));
+
+    // Record detections after deduplication so the report reflects
+    // the actual number of unique PII matches found.
+    if (_config.enableReporting) {
+      for (final match in deduped) {
+        _report?.recordDetection(match.type);
+      }
+    }
 
     return deduped;
   }

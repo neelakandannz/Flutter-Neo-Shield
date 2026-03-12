@@ -163,10 +163,10 @@ class FlutterNeoShieldPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
 
             // Screen Shield
             "enableScreenProtection" -> {
-                result.success(screenProtector.enable(activity))
+                screenProtector.enable(activity, result)
             }
             "disableScreenProtection" -> {
-                result.success(screenProtector.disable(activity))
+                screenProtector.disable(activity, result)
             }
             "isScreenProtectionActive" -> {
                 result.success(screenProtector.isActive(activity))
@@ -174,9 +174,20 @@ class FlutterNeoShieldPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
             "enableAppSwitcherGuard" -> {
                 // On Android, FLAG_SECURE already blanks the app switcher thumbnail.
                 // Enabling screen protection implicitly guards the app switcher.
-                val success = screenProtector.enable(activity)
-                appSwitcherGuardEnabled = success
-                result.success(success)
+                // We wrap the result to also track the guard state.
+                screenProtector.enable(activity, object : Result {
+                    override fun success(value: Any?) {
+                        val success = value as? Boolean ?: false
+                        appSwitcherGuardEnabled = success
+                        result.success(success)
+                    }
+                    override fun error(code: String, msg: String?, details: Any?) {
+                        result.error(code, msg, details)
+                    }
+                    override fun notImplemented() {
+                        result.notImplemented()
+                    }
+                })
             }
             "disableAppSwitcherGuard" -> {
                 // Only disable FLAG_SECURE if screen protection itself isn't active

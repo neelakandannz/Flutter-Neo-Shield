@@ -22,8 +22,23 @@ class RaspChannel {
   ///
   /// Set [failClosed] to false only in development when native plugins
   /// are not yet integrated.
+  ///
+  /// Throws [StateError] in debug mode if called again with a different
+  /// value (call [resetForTesting] first to reconfigure).
   static void configure({required bool failClosed}) {
-    if (_configured) return;
+    if (_configured) {
+      assert(() {
+        if (_failClosed != failClosed) {
+          throw StateError(
+            'RaspChannel.configure() called again with a different value '
+            '(current: failClosed=$_failClosed, requested: failClosed=$failClosed). '
+            'Call RaspChannel.resetForTesting() first if you need to reconfigure.',
+          );
+        }
+        return true;
+      }());
+      return;
+    }
     _configured = true;
     _failClosed = failClosed;
   }

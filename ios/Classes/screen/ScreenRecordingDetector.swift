@@ -8,16 +8,32 @@ class ScreenRecordingDetector {
     private var observer: NSObjectProtocol?
     private var handler: ((Bool) -> Void)?
 
+    /// Returns the primary UIScreen, preferring the modern UIWindowScene API
+    /// on iOS 16+ and falling back to UIScreen.main on earlier versions.
+    private var primaryScreen: UIScreen? {
+        if #available(iOS 16.0, *) {
+            return UIApplication.shared.connectedScenes
+                .compactMap { $0 as? UIWindowScene }
+                .first?.screen
+        }
+        return UIScreen.main
+    }
+
     /// Whether the screen is currently being captured (recorded or mirrored).
     var isRecording: Bool {
         if #available(iOS 11.0, *) {
-            return UIScreen.main.isCaptured
+            return primaryScreen?.isCaptured ?? false
         }
         return false
     }
 
     /// Whether an external display is connected (mirroring).
     var isMirrored: Bool {
+        if #available(iOS 16.0, *) {
+            return UIApplication.shared.connectedScenes
+                .compactMap { $0 as? UIWindowScene }
+                .count > 1
+        }
         return UIScreen.screens.count > 1
     }
 
@@ -32,7 +48,7 @@ class ScreenRecordingDetector {
                 object: nil,
                 queue: .main
             ) { [weak self] _ in
-                let isCaptured = UIScreen.main.isCaptured
+                let isCaptured = self?.primaryScreen?.isCaptured ?? false
                 self?.handler?(isCaptured)
             }
         }
