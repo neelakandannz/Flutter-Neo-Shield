@@ -1,7 +1,7 @@
 <p align="center">
   <img src="https://img.shields.io/pub/v/flutter_neo_shield.svg?style=for-the-badge&color=0553B1&labelColor=1B2838" alt="pub package">
   <img src="https://img.shields.io/badge/Platforms-6-0553B1?style=for-the-badge&labelColor=1B2838" alt="platforms">
-  <img src="https://img.shields.io/badge/Shields-20-00C853?style=for-the-badge&labelColor=1B2838" alt="shields">
+  <img src="https://img.shields.io/badge/Shields-27+CLI-00C853?style=for-the-badge&labelColor=1B2838" alt="shields">
   <img src="https://img.shields.io/badge/License-MIT-blue?style=for-the-badge&labelColor=1B2838" alt="license">
   <img src="https://img.shields.io/badge/Offline-100%25-orange?style=for-the-badge&labelColor=1B2838" alt="offline">
 </p>
@@ -10,17 +10,81 @@
 
 ### The most comprehensive client-side security toolkit for Flutter.
 
-**20 shields. 6 platforms. Zero backend. Zero API keys. 100% offline.**
+**27 shields + CLI security scanner. 6 platforms. Zero backend. Zero API keys. 100% offline.**
 
 Runtime protection, PII scrubbing, encrypted storage, biometric auth, anti-tampering, certificate pinning, fake GPS detection, screenshot blocking, keylogger defense, and more — all native.
 
 ---
 
-> **v2.0.0** — 13 new shield modules, 7 security enhancements. Biggest update ever.
+> **v2.1.0** — NEW: CLI Security Scanner with 90+ rules, 11 categories, 5 output formats. Run `dart run flutter_neo_shield:scan`.
 
 ---
 
-## All 20 Shields at a Glance
+## CLI Security Scanner
+
+Scan your Flutter project for **90+ security vulnerabilities** across 11 categories — from the command line.
+
+```bash
+# Standard scan (all categories)
+dart run flutter_neo_shield:scan
+
+# Quick scan (secrets + network only — fast CI gate)
+dart run flutter_neo_shield:scan --quick
+
+# Deep scan (standard + dependency audit + compliance)
+dart run flutter_neo_shield:scan --deep
+
+# CI mode — exit code 1 if critical/high findings
+dart run flutter_neo_shield:scan --deep --ci
+
+# Export as JSON / SARIF / HTML / JUnit XML
+dart run flutter_neo_shield:scan --format json --output report.json
+dart run flutter_neo_shield:scan --format sarif --output results.sarif.json
+dart run flutter_neo_shield:scan --format html --output report.html
+dart run flutter_neo_shield:scan --format junit --output results.xml
+
+# List all 90+ rules
+dart run flutter_neo_shield:scan --list-rules
+```
+
+### 11 Scan Categories
+
+| # | Category | Rules | What it detects |
+|---|----------|:-----:|-----------------|
+| 1 | **Hardcoded Secrets** | 12 | API keys, tokens, passwords, private keys, database URIs, Firebase creds, cloud keys, webhooks, encryption keys |
+| 2 | **Insecure Network** | 9 | HTTP URLs, disabled cert validation, missing pinning, cleartext traffic, WebSocket without TLS, CORS wildcard |
+| 3 | **Insecure Storage** | 9 | SharedPreferences secrets, unencrypted SQLite/Hive, web localStorage, logging PII, secrets in assets |
+| 4 | **Platform Config** | 10 | Debuggable flag, exported components, backup enabled, ATS disabled, missing ProGuard, low minSdk |
+| 5 | **Auth & Session** | 7 | Biometric without crypto, token in URL, missing expiry, insecure deep links, hardcoded credentials |
+| 6 | **Cryptography** | 8 | MD5/SHA1, ECB mode, static IV, weak key derivation, insecure Random(), custom crypto, predictable seeds |
+| 7 | **Code Injection** | 8 | SQL injection, XSS in WebView, command injection, path traversal, unsafe deserialization, ReDoS |
+| 8 | **Dependency Chain** | 7 | Unpinned versions, dependency confusion, git deps without hash, dependency_overrides |
+| 9 | **Privacy** | 7 | PII in logs, analytics without consent, device fingerprinting, clipboard PII exposure |
+| 10 | **Build & Release** | 6 | Source maps exposed, .env committed, keystore password in gradle, test code in production |
+| 11 | **Flutter Specific** | 7 | Unprotected MethodChannel, app switcher state, WebView JS bridge, async gap, global mutable secrets |
+
+### 5 Output Formats
+
+| Format | Flag | Best for |
+|--------|------|----------|
+| **ASCII** | `--format ascii` | Terminal — color-coded with severity bars, score card, grade |
+| **JSON** | `--format json` | CI/CD pipelines, custom tooling |
+| **SARIF** | `--format sarif` | GitHub Advanced Security integration |
+| **HTML** | `--format html` | Shareable audit reports with dark theme |
+| **JUnit XML** | `--format junit` | Jenkins, GitLab CI, Azure DevOps test results |
+
+### Security Score
+
+Every scan produces a **security score (0-100)** and **letter grade (A-F)**:
+- **A (90-100):** No critical/high issues
+- **B (80-89):** Minor issues only
+- **C (70-79):** Some medium-severity issues
+- **D (60-69):** Multiple issues need attention
+- **F (<60):** Critical security gaps
+
+---
+
+## All 27 Shields at a Glance
 
 ### Core Protection
 
@@ -101,7 +165,7 @@ Runtime protection, PII scrubbing, encrypted storage, biometric auth, anti-tampe
 ```yaml
 # pubspec.yaml
 dependencies:
-  flutter_neo_shield: ^2.0.0
+  flutter_neo_shield: ^2.1.0
 ```
 
 ```dart

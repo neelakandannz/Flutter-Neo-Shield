@@ -1,7 +1,8 @@
 /// Client-side security & PII protection toolkit for Flutter.
 ///
-/// 20 shields covering runtime protection, data security, input safety,
-/// network hardening, and privacy compliance — native on all 6 platforms.
+/// 27 shields + CLI security scanner covering runtime protection, data security,
+/// input safety, network hardening, and privacy compliance — native on all 6 platforms.
+/// Run `dart run flutter_neo_shield:scan` for static security analysis.
 ///
 /// ```dart
 /// import 'package:flutter_neo_shield/flutter_neo_shield.dart';

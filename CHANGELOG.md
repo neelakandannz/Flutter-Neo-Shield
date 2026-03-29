@@ -1,3 +1,158 @@
+## 2.1.0
+
+### CLI Security Scanner — Advanced Deep Analysis
+
+New `dart run flutter_neo_shield:scan` command-line tool that performs **90+ security checks** across **11 categories** with **5 output formats**. Zero changes to existing shields — 100% new code in separate files.
+
+#### Scanner Engine
+
+- **Pure Dart CLI** — runs without Flutter SDK, no Flutter imports
+- **File traversal engine** — recursively scans project files, skips build/cache/generated directories
+- **Pattern-based + custom rules** — regex content matching with exclusion patterns, plus custom check functions for config parsing and file-existence rules
+- **Parallel-safe** — rules are stateless, engine is single-pass
+- **Performance** — skips files >1MB, only scans relevant file extensions, deduplicates false positives
+
+#### 11 Detection Categories (90+ Rules)
+
+##### 1. Hardcoded Secrets (12 rules)
+- API keys: `sk_live_`, `pk_test_`, `AKIA`, `AIza`, `ghp_`, `glpat-`, `xox[bpas]-`
+- OAuth/Bearer tokens, JWT tokens (`eyJ...`)
+- Private keys (PEM-encoded RSA/EC/DSA)
+- Database connection strings (mongodb://, postgres://, mysql://, redis://)
+- Firebase credentials, cloud provider keys (AWS, GCP, Azure)
+- Webhook URLs (Slack, Discord, Stripe)
+- Hardcoded encryption keys/IVs, passwords/PINs
+- SSH private key references, CI/CD tokens
+
+##### 2. Insecure Network Configuration (9 rules)
+- HTTP URLs (non-HTTPS, excluding localhost)
+- Disabled certificate validation (`badCertificateCallback => true`)
+- HttpClient without certificate pinning
+- Android `usesCleartextTraffic="true"`
+- Trust-all network security config
+- Unencrypted WebSocket (`ws://`)
+- SSL/TLS verification bypass
+- CORS wildcard origin, unconditional proxy trust
+
+##### 3. Insecure Data Storage (9 rules)
+- Tokens/passwords in SharedPreferences
+- Unencrypted SQLite (sqflite without sqlcipher)
+- Secrets written to plain files
+- Hive/GetStorage/MMKV without encryption
+- Web localStorage/sessionStorage for sensitive data
+- Sensitive data in cache/temp directories
+- Sensitive data in print/log statements
+- Secrets bundled in assets/ (.env, credentials.json, .pem, .key)
+
+##### 4. Platform Configuration Weaknesses (10 rules)
+- `android:debuggable="true"` in release
+- Exported Android components without permissions
+- `android:allowBackup="true"`
+- iOS `NSAllowsArbitraryLoads` ATS exception
+- Custom URL schemes without validation
+- Missing ProGuard/R8 for release builds
+- Missing `--obfuscate --split-debug-info` in CI/CD
+- minSdkVersion below 23
+- Over-requested dangerous permissions
+
+##### 5. Authentication & Session Flaws (7 rules)
+- `local_auth` biometric without cryptographic binding
+- Token in URL query parameters
+- Token stored without expiry check
+- Deep link parameters used without validation
+- User input concatenated into API calls
+- Hardcoded test/user credentials
+- Auto-login without device binding
+
+##### 6. Cryptography Weaknesses (8 rules)
+- MD5/SHA1 for security purposes
+- AES ECB mode
+- Static/hardcoded IV or nonce
+- Password used directly as encryption key
+- Insufficient key length (AES-128, RSA-1024)
+- `Random()` instead of `Random.secure()` for security
+- Custom cryptographic implementations
+- Predictable random seeds
+
+##### 7. Code Quality & Injection (8 rules)
+- SQL injection (string interpolation in rawQuery)
+- XSS via WebView `evaluateJavascript()` with unsanitized input
+- Command injection via `Process.run()` with user input
+- Path traversal (`../`) in file operations
+- Unvalidated JSON deserialization
+- ReDoS (catastrophic regex backtracking)
+- `dart:mirrors` / dynamic code execution
+- Unsafe HTML rendering with user content
+
+##### 8. Dependency & Supply Chain (7 rules)
+- Missing pubspec.lock
+- Unpinned dependency versions (`^`, `any`, `>=`)
+- Dependency confusion risk (private package names)
+- pubspec.lock in .gitignore
+- Plugins with native code from unknown sources
+- Git dependencies without commit hash pin
+- `dependency_overrides` present
+
+##### 9. Privacy & Compliance (7 rules)
+- PII patterns in print/log statements
+- User data in exception messages
+- Cached data without cleanup/TTL
+- Analytics initialized without consent check
+- Device identifier collection without disclosure
+- `Clipboard.setData` without auto-clear
+- Sensitive screens without screenshot protection
+
+##### 10. Build & Release Security (6 rules)
+- Web source maps in build output
+- .env files in project root (not gitignored)
+- Keystore passwords hardcoded in build.gradle
+- Test packages imported in lib/ code
+- Dev-only packages imported in lib/
+
+##### 11. Flutter/Dart Specific (7 rules)
+- MethodChannel without input validation
+- AppLifecycleState handler without screen protection
+- WebView JavascriptChannel without origin check
+- Global mutable variables holding sensitive data
+- Missing `mounted` check after await in StatefulWidget
+- Deep link routes without auth guards
+- WebView with JavaScript + file access enabled
+
+#### 5 Output Formats
+
+- **ASCII** — Color-coded terminal report with severity bars, score card, letter grade (A-F)
+- **JSON** — Machine-readable structured output for custom tooling
+- **SARIF 2.1.0** — GitHub Advanced Security compatible format
+- **HTML** — Dark-themed shareable audit report with tables and badges
+- **JUnit XML** — CI pipeline test-result format (Jenkins, GitLab CI, Azure DevOps)
+
+#### Scanner Modes
+
+- `--quick` — Secrets + network only (21 rules, fast CI gate)
+- `--standard` — All categories except dependency/privacy/build (73 rules, default)
+- `--deep` — All 90+ rules including dependency audit and compliance checks
+- `--ci` — Non-zero exit code on critical/high findings
+- `--exclude` — Skip file patterns
+- `--exclude-rules` — Skip specific rule IDs
+- `--min-severity` — Filter by minimum severity level
+- `--list-rules` — Print all available rules and exit
+
+#### Security Score
+
+- **0-100 score** with letter grade (A-F)
+- Score penalizes by severity weight: critical (5), high (4), medium (3), low (2), info (1)
+- `--ci` mode: exits with code 1 if any critical or high severity findings
+
+#### Architecture
+
+- **Zero existing code changes** — all new files in `lib/src/cli_scanner/` and `bin/scan.dart`
+- **Pure Dart** — no Flutter dependency in scanner code, runs as `dart run`
+- **Modular rules** — each category in its own file, registered via `RuleRegistry`
+- **Extensible** — add custom rules by creating new rule files and registering them
+- **Version:** 2.0.0 → 2.1.0
+
+---
+
 ## 2.0.0
 
 ### 20 New Security Shields — The Biggest Update Ever
